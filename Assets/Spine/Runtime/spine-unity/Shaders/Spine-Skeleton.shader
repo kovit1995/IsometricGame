@@ -1,7 +1,7 @@
 Shader "Spine/Skeleton" {
 	Properties {
 		_Cutoff ("Shadow alpha cutoff", Range(0,1)) = 0.1
-		[NoScaleOffset] _MainTex ("Main Texture", 2D) = "black" {}
+		_MainTex ("Main Texture", 2D) = "black" {}
 		[Toggle(_STRAIGHT_ALPHA_INPUT)] _StraightAlphaInput("Straight Alpha Texture", Int) = 0
 		[HideInInspector] _StencilRef("Stencil Reference", Float) = 1.0
 		[HideInInspector][Enum(UnityEngine.Rendering.CompareFunction)] _StencilComp("Stencil Comparison", Float) = 8 // Set to Always as default
@@ -41,6 +41,8 @@ Shader "Spine/Skeleton" {
 			#include "UnityCG.cginc"
 			#include "CGIncludes/Spine-Common.cginc"
 			sampler2D _MainTex;
+			float4 _MainTex_ST;
+			float _angle = 60;
 
 			struct VertexInput {
 				float4 vertex : POSITION;
@@ -49,15 +51,31 @@ Shader "Spine/Skeleton" {
 			};
 
 			struct VertexOutput {
-				float4 pos : SV_POSITION;
+				float4 vertex : SV_POSITION;
 				float2 uv : TEXCOORD0;
 				float4 vertexColor : COLOR;
 			};
 
 			VertexOutput vert (VertexInput v) {
 				VertexOutput o;
-				o.pos = UnityObjectToClipPos(v.vertex);
-				o.uv = v.uv;
+				o.vertex = UnityObjectToClipPos(v.vertex);
+				o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+
+				fixed radian = _angle / 180 * 3.14159;
+				fixed cosTheta = cos(radian);
+				fixed sinTheta = sin(radian);
+
+				half2 center = half2(0, -0.5);
+				v.vertex.zy -= center;
+
+				half z = v.vertex.z * cosTheta - v.vertex.y * sinTheta;
+				half y = v.vertex.z * sinTheta + v.vertex.y * cosTheta;
+				v.vertex = half4(v.vertex.x, y, z, v.vertex.w);
+
+				v.vertex.zy += center;
+
+				float4 pos = UnityObjectToClipPos(v.vertex);
+				o.vertex.z = pos.z / pos.w * o.vertex.w;
 				o.vertexColor = PMAGammaToTargetSpace(v.vertexColor);
 				return o;
 			}
