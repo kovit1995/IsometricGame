@@ -5,5 +5,5 @@
 ### 问题一：空间关系错误
 * 尝试关闭ZTest或者使用多个摄像机进行渲染  
   ZTest:  
-  
+  [ZTest](https://raw.githubusercontent.com/kovit1995/IsometricGame/master/rUeLv3v.png)
 >* 无法被前面的场景正确的遮挡
